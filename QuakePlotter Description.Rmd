@@ -1,0 +1,101 @@
+---
+title: "QuakePlotter Description"
+author: "Thomas Klinger"
+date: "29 September 2018"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Assignment
+
+This peer assessed assignment had two parts. First, a Shiny application was created and deployed on shiniapps.io. The link to the application is here:
+
+
+https://thklinger.shinyapps.io/QuakePlotter/
+
+
+The application had to include the following:
+
+- Some form of input (widget: textbox, radio button, checkbox, ...);
+- Some operation on the ui input in sever.R;
+- Some reactive output displayed as a result of server calculations;
+- Enough documentation so that a novice user could use the application.
+
+## Description
+
+This application shows the distribution of earthquakes in the Fiji region, originally displayed with their geographic coordinates in latitude and longitude, but you can change the axis parameters, if you like. In general, the parameters are:
+
+- Latitude,
+- Longitude,
+- Depth,
+- Magnitude,
+- Number of stations recording.
+
+For instance, you get an interesting result if you leave latitude and longitude as the axis parameters, and use color to display the depth; you will find out, that the deeper quakes all occured in a specific region.
+
+## Description (Ctd.)
+
+You may also check the 'Smooth' box to see a distribution approximation; vary the sample size to see the approximation change.
+
+I know, that the facet row and column settings are not adding an additional value; anyway, I left them in the application.
+
+An additional remark: The setting with depth as color works best with a sample size > 500!
+
+Have fun!
+
+## R code of ui.R
+
+(full code on github)
+
+```{r echo=TRUE, results='hide'}
+library(shiny)
+library(ggplot2)
+dataset <- quakes
+shinyUI(pageWithSidebar(
+    headerPanel("Earthquakes in the Fiji Region"),
+    sidebarPanel(
+         sliderInput('sampleSize', 'Sample Size', min=10, max=nrow(dataset),
+                    value=min(10, nrow(dataset)), step=5, round=0),
+        selectInput('x', 'X', names(dataset), names(dataset)[[2]]),
+        selectInput('y', 'Y', names(dataset)),
+        selectInput('color', 'Color', c('None', names(dataset))),
+        checkboxInput('smooth', 'Smooth'),
+        selectInput('facet_row', 'Facet Row', c(None='.', names(dataset))),
+        selectInput('facet_col', 'Facet Column', c(None='.', names(dataset)))
+                 ),
+    mainPanel(
+      plotOutput('plot')
+              )
+))
+```
+
+## R code of server.R
+
+(full code on github)
+
+```{r echo=TRUE, results='hide'}
+library(shiny)
+library(ggplot2)
+shinyServer(function(input, output) {
+    dataset <- reactive( {
+        quakes[sample(nrow(quakes), input$sampleSize),]
+    })
+    output$plot <- reactivePlot(function() {
+        p <- ggplot(dataset(), aes_string(x=input$x, y=input$y)) + geom_point()
+        if (input$color != 'None')
+            p <- p + aes_string(color=input$color)
+            facets <- paste(input$facet_row, '~', input$facet_col)
+                if (facets != '. ~ .')
+                    p <- p + facet_grid(facets)
+                if (input$smooth)
+                    p <- p + geom_smooth()
+                    print(p)
+    }, height=600
+    )
+})
+```
+
+
