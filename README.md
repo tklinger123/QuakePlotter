@@ -8,4 +8,4 @@ Also present are the ui.R and server.R files and a short description as R markdo
 
 http://rpubs.com/tklinger/424334
 
-To see the presentation as text file, click on 
+To see the presentation as text file, click on the file QuakePlotter Description.Rmd.
